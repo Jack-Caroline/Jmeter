@@ -1,0 +1,366 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.1.1 r1855137">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="淳石APP" enabled="true">
+      <stringProp name="TestPlan.comments"></stringProp>
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <boolProp name="TestPlan.tearDown_on_shutdown">true</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="用户定义的变量" enabled="true">
+        <collectionProp name="Arguments.arguments"/>
+      </elementProp>
+      <stringProp name="TestPlan.user_define_classpath"></stringProp>
+    </TestPlan>
+    <hashTree>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="线程组" enabled="true">
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="循环控制器" enabled="true">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <stringProp name="LoopController.loops">1</stringProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.num_threads">1</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">1</stringProp>
+        <boolProp name="ThreadGroup.scheduler">false</boolProp>
+        <stringProp name="ThreadGroup.duration"></stringProp>
+        <stringProp name="ThreadGroup.delay"></stringProp>
+      </ThreadGroup>
+      <hashTree>
+        <BeanShellSampler guiclass="BeanShellSamplerGui" testclass="BeanShellSampler" testname="BeanShell 取样器" enabled="true">
+          <stringProp name="BeanShellSampler.query">import org.apache.commons.codec.digest.DigestUtils;
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.Objects;
+import java.nio.charset.StandardCharsets;
+public static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
+public static final byte[] DIGITS_LOWER = new byte[]{&apos;0&apos;, &apos;1&apos;, &apos;2&apos;, &apos;3&apos;, &apos;4&apos;, &apos;5&apos;, &apos;6&apos;, &apos;7&apos;, &apos;8&apos;, &apos;9&apos;, &apos;a&apos;, &apos;b&apos;, &apos;c&apos;, &apos;d&apos;, &apos;e&apos;, &apos;f&apos;};
+public static final byte[] DIGITS_UPPER = new byte[]{&apos;0&apos;, &apos;1&apos;, &apos;2&apos;, &apos;3&apos;, &apos;4&apos;, &apos;5&apos;, &apos;6&apos;, &apos;7&apos;, &apos;8&apos;, &apos;9&apos;, &apos;A&apos;, &apos;B&apos;, &apos;C&apos;, &apos;D&apos;, &apos;E&apos;, &apos;F&apos;};
+/**
+ * hex加密
+ *
+ * @param content    文本内容
+ * @param aesTextKey 文本密钥
+ * @return {String}
+ */
+public static String encryptToHex(String content, String aesTextKey) {
+    byte[]  res = encrypt(content.getBytes(DEFAULT_CHARSET), Objects.requireNonNull(aesTextKey).getBytes(DEFAULT_CHARSET));
+    return new String(encode(res,DIGITS_LOWER), DEFAULT_CHARSET);
+}
+/**
+ * encode Hex
+ *
+ * @param data Data to Hex
+ * @return bytes as a hex string
+ */
+private static byte[] encode(byte[] data, byte[] digits) {
+    int len = data.length;
+    byte[] out = new byte[len &lt;&lt; 1];
+    for (int i = 0, j = 0; i &lt; len; i++) {
+        out[j++] = digits[(0xF0 &amp; data[i]) &gt;&gt;&gt; 4];
+        out[j++] = digits[0xF &amp; data[i]];
+    }
+    return out;
+}
+/**
+ * 解密
+ *
+ * @param content 内容
+ * @param aesKey  密钥
+ * @return byte[]
+ */
+public static byte[] encrypt(byte[] content, byte[] aesKey) {
+    return aes(Pkcs7Encoderencode(content), aesKey, Cipher.ENCRYPT_MODE);
+}
+/**
+ * ase加密
+ *
+ * @param encrypted 内容
+ * @param aesKey    密钥
+ * @param mode      模式
+ * @return byte[]
+ */
+public static byte[] aes(byte[] encrypted, byte[] aesKey, int mode) {
+    if(aesKey.length != 32)
+        //&quot;IllegalAesKey, aesKey&apos;s length must be 32&quot;
+        return null;
+    try {
+        Cipher cipher = Cipher.getInstance(&quot;AES/CBC/NoPadding&quot;);
+        SecretKeySpec keySpec = new SecretKeySpec(aesKey, &quot;AES&quot;);
+        IvParameterSpec iv = new IvParameterSpec(Arrays.copyOfRange(aesKey, 0, 16));
+        cipher.init(mode, keySpec, iv);
+        return cipher.doFinal(encrypted);
+    } catch (Exception e) {
+        return null;
+    }
+}
+
+public static byte[] Pkcs7Encoderencode(byte[] src) {
+            int count = src.length;
+            // 计算需要填充的位数
+            int amountToPad = 32 - (count % 32);
+            // 获得补位所用的字符
+            byte pad = (byte) (amountToPad &amp; 0xFF);
+            byte[] pads = new byte[amountToPad];
+            for (int index = 0; index &lt; amountToPad; index++) {
+                pads[index] = pad;
+            }
+            int length = count + amountToPad;
+            byte[] dest = new byte[length];
+            System.arraycopy(src, 0, dest, 0, count);
+            System.arraycopy(pads, 0, dest, count, amountToPad);
+            return dest;
+}
+
+
+//return encryptToHex(&quot;{}&quot;,&quot;0123456789abcdef0123456789abcdef&quot;);
+
+
+ // md5加密
+String sign_data = vars.get(&quot;sign_data&quot;);
+String sign_md5 = DigestUtils.md5Hex(sign_data);
+String aesKey_jmeter = vars.get(&quot;aesKey_data&quot;);
+// aes加密
+String token_sign = encryptToHex(sign_md5,aesKey_jmeter);
+vars.put(&quot;sign_md5&quot;,sign_md5);
+vars.put(&quot;token_sign&quot;,token_sign);
+
+
+//String body=&quot;{\&quot;grant_type\&quot;:\&quot;organChange\&quot;,\&quot;username\&quot;:\&quot;15618574386\&quot;,\&quot;scope\&quot;:\&quot;all\&quot;,\&quot;tenantId\&quot;:\&quot;333732\&quot;}&quot;;
+String body=&quot;{}&quot;;
+String token_body = encryptToHex(body,aesKey_jmeter);
+vars.put(&quot;token_body&quot;,token_body);
+
+
+
+//return token_sign;
+        
+//import org.microstone.core.tool.utils.*;
+
+//String aesKey_jmeter = vars.get(&quot;aesKey_data&quot;);
+//vars.put(&quot;aesKey_jmeter&quot;,aesKey_jmeter);
+//String sign_md5 = vars.get(&quot;sign_md5&quot;);
+//vars.put(&quot;token_sign&quot;,sign_md5);
+//String token_sign = AesUtil.encryptToHex(sign_md5,aesKey_jmeter);
+//vars.put(&quot;token_sign&quot;,token_sign);
+
+//String data={&quot;grant_type&quot;: &quot;organChange&quot;,
+//    &quot;username&quot;:17501621127,
+//    &quot;scope&quot;:&quot;all&quot;,
+//    &quot;tenantId&quot;:333732}
+
+//String data_sign = AesUtil.encryptToHex(data,aesKey);
+
+//vars.put(&quot;data_sign&quot;,data_sign);
+
+
+</stringProp>
+          <stringProp name="BeanShellSampler.filename"></stringProp>
+          <stringProp name="BeanShellSampler.parameters"></stringProp>
+          <boolProp name="BeanShellSampler.resetInterpreter">false</boolProp>
+        </BeanShellSampler>
+        <hashTree/>
+        <ConfigTestElement guiclass="HttpDefaultsGui" testclass="ConfigTestElement" testname="HTTP请求默认值" enabled="true">
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="用户定义的变量" enabled="true">
+            <collectionProp name="Arguments.arguments"/>
+          </elementProp>
+          <stringProp name="HTTPSampler.domain">180.169.206.150</stringProp>
+          <stringProp name="HTTPSampler.port">14245</stringProp>
+          <stringProp name="HTTPSampler.protocol">http</stringProp>
+          <stringProp name="HTTPSampler.contentEncoding">utf-8</stringProp>
+          <stringProp name="HTTPSampler.path"></stringProp>
+          <stringProp name="HTTPSampler.concurrentPool">6</stringProp>
+          <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+          <stringProp name="HTTPSampler.response_timeout"></stringProp>
+        </ConfigTestElement>
+        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="登录前获取 token 值" enabled="true">
+          <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">{&quot;data&quot;:&quot;W2dZZB0jkbxUP7UA92fGyA==&quot;}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+          <stringProp name="HTTPSampler.domain"></stringProp>
+          <stringProp name="HTTPSampler.port"></stringProp>
+          <stringProp name="HTTPSampler.protocol"></stringProp>
+          <stringProp name="HTTPSampler.contentEncoding">utf-8</stringProp>
+          <stringProp name="HTTPSampler.path">/api/ms-auth/oauth/token?grant_type=msgCaptcha&amp;scope=all&amp;type=account&amp;username=15618574386</stringProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+          <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+          <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+          <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+          <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+          <stringProp name="HTTPSampler.response_timeout"></stringProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP信息头管理器" enabled="true">
+            <collectionProp name="HeaderManager.headers">
+              <elementProp name="" elementType="Header">
+                <stringProp name="Header.name">timeStamp</stringProp>
+                <stringProp name="Header.value">${time}</stringProp>
+              </elementProp>
+              <elementProp name="" elementType="Header">
+                <stringProp name="Header.name">deviceId</stringProp>
+                <stringProp name="Header.value">${deviceId}</stringProp>
+              </elementProp>
+              <elementProp name="" elementType="Header">
+                <stringProp name="Header.name">sign</stringProp>
+                <stringProp name="Header.value">${token_sign}</stringProp>
+              </elementProp>
+              <elementProp name="" elementType="Header">
+                <stringProp name="Header.name">captcha-key</stringProp>
+                <stringProp name="Header.value">111</stringProp>
+              </elementProp>
+              <elementProp name="" elementType="Header">
+                <stringProp name="Header.name">captcha-code</stringProp>
+                <stringProp name="Header.value">1234</stringProp>
+              </elementProp>
+              <elementProp name="" elementType="Header">
+                <stringProp name="Header.name">user-type</stringProp>
+                <stringProp name="Header.value">app</stringProp>
+              </elementProp>
+              <elementProp name="" elementType="Header">
+                <stringProp name="Header.name">Content-Type</stringProp>
+                <stringProp name="Header.value">application/json;charset=utf-8</stringProp>
+              </elementProp>
+              <elementProp name="" elementType="Header">
+                <stringProp name="Header.name">authorization</stringProp>
+                <stringProp name="Header.value">Basic c2FiZXI6c2FiZXJfc2VjcmV0</stringProp>
+              </elementProp>
+              <elementProp name="" elementType="Header">
+                <stringProp name="Header.name">accept</stringProp>
+                <stringProp name="Header.value">application/json, text/plain, */*</stringProp>
+              </elementProp>
+            </collectionProp>
+          </HeaderManager>
+          <hashTree/>
+        </hashTree>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="登录获取 token" enabled="false">
+          <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">{&quot;data&quot;:&quot;W2dZZB0jkbxUP7UA92fGyA==&quot;}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+          <stringProp name="HTTPSampler.domain">180.169.206.150</stringProp>
+          <stringProp name="HTTPSampler.port">14245</stringProp>
+          <stringProp name="HTTPSampler.protocol">http</stringProp>
+          <stringProp name="HTTPSampler.contentEncoding">utf-8</stringProp>
+          <stringProp name="HTTPSampler.path">/api/ms-auth/oauth/token?grant_type=msgCaptcha&amp;scope=all&amp;type=account&amp;username=15618574386</stringProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+          <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+          <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+          <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+          <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+          <stringProp name="HTTPSampler.response_timeout"></stringProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP信息头管理器" enabled="true">
+            <collectionProp name="HeaderManager.headers">
+              <elementProp name="" elementType="Header">
+                <stringProp name="Header.name">timeStamp</stringProp>
+                <stringProp name="Header.value">${__time(,)}</stringProp>
+              </elementProp>
+              <elementProp name="" elementType="Header">
+                <stringProp name="Header.name">deviceId</stringProp>
+                <stringProp name="Header.value">${deviceId}</stringProp>
+              </elementProp>
+              <elementProp name="" elementType="Header">
+                <stringProp name="Header.name">sign</stringProp>
+                <stringProp name="Header.value">${sign}</stringProp>
+              </elementProp>
+            </collectionProp>
+          </HeaderManager>
+          <hashTree/>
+        </hashTree>
+        <Arguments guiclass="ArgumentsPanel" testclass="Arguments" testname="用户定义的变量" enabled="true">
+          <collectionProp name="Arguments.arguments">
+            <elementProp name="time" elementType="Argument">
+              <stringProp name="Argument.name">time</stringProp>
+              <stringProp name="Argument.value">${__time(,)}</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="login_path" elementType="Argument">
+              <stringProp name="Argument.name">login_path</stringProp>
+              <stringProp name="Argument.value">/api/ms-auth/oauth</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="deviceId" elementType="Argument">
+              <stringProp name="Argument.name">deviceId</stringProp>
+              <stringProp name="Argument.value">ce4dd0dbe477cdcd</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="sign_data" elementType="Argument">
+              <stringProp name="Argument.name">sign_data</stringProp>
+              <stringProp name="Argument.value">/ms-auth/oauth/tokence4dd0dbe477cdcd${__time(,)}{}</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="aesKey_data" elementType="Argument">
+              <stringProp name="Argument.name">aesKey_data</stringProp>
+              <stringProp name="Argument.value">0123456789abcdef0123456789abcdef</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+          </collectionProp>
+        </Arguments>
+        <hashTree/>
+        <DebugSampler guiclass="TestBeanGUI" testclass="DebugSampler" testname="当前时间 time=${time}" enabled="true">
+          <boolProp name="displayJMeterProperties">false</boolProp>
+          <boolProp name="displayJMeterVariables">true</boolProp>
+          <boolProp name="displaySystemProperties">false</boolProp>
+        </DebugSampler>
+        <hashTree/>
+      </hashTree>
+      <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="察看结果树" enabled="true">
+        <boolProp name="ResultCollector.error_logging">false</boolProp>
+        <objProp>
+          <name>saveConfig</name>
+          <value class="SampleSaveConfiguration">
+            <time>true</time>
+            <latency>true</latency>
+            <timestamp>true</timestamp>
+            <success>true</success>
+            <label>true</label>
+            <code>true</code>
+            <message>true</message>
+            <threadName>true</threadName>
+            <dataType>true</dataType>
+            <encoding>false</encoding>
+            <assertions>true</assertions>
+            <subresults>true</subresults>
+            <responseData>false</responseData>
+            <samplerData>false</samplerData>
+            <xml>false</xml>
+            <fieldNames>true</fieldNames>
+            <responseHeaders>false</responseHeaders>
+            <requestHeaders>false</requestHeaders>
+            <responseDataOnError>false</responseDataOnError>
+            <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+            <assertionsResultsToSave>0</assertionsResultsToSave>
+            <bytes>true</bytes>
+            <sentBytes>true</sentBytes>
+            <url>true</url>
+            <threadCounts>true</threadCounts>
+            <idleTime>true</idleTime>
+            <connectTime>true</connectTime>
+          </value>
+        </objProp>
+        <stringProp name="filename"></stringProp>
+      </ResultCollector>
+      <hashTree/>
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>
